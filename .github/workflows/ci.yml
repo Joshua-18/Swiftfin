@@ -51,30 +51,31 @@ jobs:
       - name: Update Carthage
         run: carthage update --use-xcframeworks --cache-builds
 
-      - name: Build and Archive
+      - name: Build the Project
         run: |
-          xcodebuild clean archive \
+          xcodebuild clean build \
           -project "Swiftfin.xcodeproj" \
           -scheme "Swiftfin" \
-          -archivePath $PWD/build/Swiftfin.xcarchive \
+          -configuration Release \
+          -derivedDataPath build/derived_data \
           CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
-      - name: Export IPA
-        run: |
-          xcodebuild -exportArchive \
-          -archivePath $PWD/build/Swiftfin.xcarchive \
-          -exportPath $PWD/build \
-          -exportOptionsPlist $PWD/ExportOptions.plist
+      - name: Create Payload Directory
+        run: mkdir -p build/Payload
 
-      - name: Fake Code Sign the IPA
+      - name: Copy App to Payload
+        run: cp -r build/derived_data/Build/Products/Release-iphoneos/Swiftfin.app build/Payload
+
+      - name: Fake Code Sign the App
+        run: ldid -S build/Payload/Swiftfin.app/Swiftfin
+
+      - name: Package IPA
         run: |
           cd build
-          unzip -q Swiftfin.ipa
-          ldid -S Payload/Swiftfin.app/Swiftfin
-          zip -qry Swiftfin.ipa Payload
+          zip -r Swiftfin.ipa Payload
 
       - name: Upload IPA as Artifact
         uses: actions/upload-artifact@v3
         with:
           name: Swiftfin-ipa
-          path: $PWD/build/Swiftfin.ipa
+          path: build/Swiftfin.ipa
