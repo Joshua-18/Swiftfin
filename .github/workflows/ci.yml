@@ -87,5 +87,5 @@ jobs:
       - name: Upload IPA as Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: Swiftfin-ipa
+          name: Swiftfin
           path: build/Swiftfin.ipa
