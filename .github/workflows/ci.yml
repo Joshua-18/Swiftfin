@@ -60,6 +60,11 @@ jobs:
           -derivedDataPath build/derived_data \
           CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
+      - name: Verify Build Output
+        run: |
+          echo "Contents of build/derived_data/Build/Products/Release-iphoneos:"
+          ls build/derived_data/Build/Products/Release-iphoneos/
+
       - name: Create Payload Directory
         run: mkdir -p build/Payload
 
