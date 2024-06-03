@@ -5,7 +5,7 @@ on:
     inputs:
       bundle_id:
         description: "Modify the bundle ID (optional)"
-        default: "com.yourcompany.swiftfin"
+        default: "org.jellyfin.swiftfin"
         required: false
         type: string
       app_name:
@@ -70,6 +70,11 @@ jobs:
 
       - name: Copy App to Payload
         run: cp -r build/derived_data/Build/Products/Release-iphoneos/"Swiftfin iOS.app" build/Payload
+
+      - name: Verify App Contents
+        run: |
+          echo "Contents of build/Payload/Swiftfin iOS.app:"
+          ls build/Payload/"Swiftfin iOS.app"
 
       - name: Fake Code Sign the App
         run: ldid -S build/Payload/"Swiftfin iOS.app"/Swiftfin
