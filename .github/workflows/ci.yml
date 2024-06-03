@@ -5,7 +5,7 @@ on:
     inputs:
       bundle_id:
         description: "Modify the bundle ID (optional)"
-        default: "com.yourcompany.swiftfin"
+        default: "org.jellyfin.swiftfin"
         required: false
         type: string
       app_name:
