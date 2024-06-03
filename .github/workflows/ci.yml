@@ -1,31 +1,38 @@
-name: "Build 🔨"
+name: "Build and Release Swiftfin"
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - ready_for_review
-    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      bundle_id:
+        description: "Modify the bundle ID (optional)"
+        default: "com.yourcompany.swiftfin"
+        required: false
+        type: string
+      app_name:
+        description: "Modify the name of the app on the Home Screen (optional)"
+        default: "Swiftfin"
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-    name: "Build 🔨"
-    if: github.event.pull_request.draft == true
-    strategy:
-      matrix:
-        scheme:
-          - "Swiftfin"
-          - "Swiftfin tvOS"
-
+    name: Build Swiftfin
     runs-on: macos-14
+    permissions:
+      contents: write
 
-    steps:    
-      - name: Checkout
+    steps:
+      - name: Checkout Main
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Dependencies
+        run: brew install ldid dpkg make
 
       - name: Install SwiftGen
         run: brew install swiftgen
@@ -44,23 +51,30 @@ jobs:
       - name: Update Carthage
         run: carthage update --use-xcframeworks --cache-builds
 
-      # FIXME: caches would keep failed compiles?
+      - name: Build and Archive
+        run: |
+          xcodebuild clean archive \
+          -project "Swiftfin.xcodeproj" \
+          -scheme "Swiftfin" \
+          -archivePath $PWD/build/Swiftfin.xcarchive \
+          CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
-      # - name: Cache Swift packages
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: PackageCache
-      #     key: ${{ runner.os }}-${{ matrix.scheme }}-spm-${{ hashFiles('**/Package.resolved') }}
-      #     restore-keys: ${{ runner.os }}-${{ matrix.scheme }}-spm-
+      - name: Export IPA
+        run: |
+          xcodebuild -exportArchive \
+          -archivePath $PWD/build/Swiftfin.xcarchive \
+          -exportPath $PWD/build \
+          -exportOptionsPlist $PWD/ExportOptions.plist
 
-      - name: Build
-        uses: nick-fields/retry@v2
+      - name: Fake Code Sign the IPA
+        run: |
+          cd build
+          unzip -q Swiftfin.ipa
+          ldid -S Payload/Swiftfin.app/Swiftfin
+          zip -qry Swiftfin.ipa Payload
+
+      - name: Upload IPA as Artifact
+        uses: actions/upload-artifact@v3
         with:
-          max_attempts: 3
-          retry_on: error
-          timeout_minutes: 60
-          command: |
-            xcodebuild build -project "Swiftfin.xcodeproj" \
-            -scheme "${{ matrix.scheme }}" \
-            -clonedSourcePackagesDirPath PackageCache \
-            CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+          name: Swiftfin-ipa
+          path: $PWD/build/Swiftfin.ipa
