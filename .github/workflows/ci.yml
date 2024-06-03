@@ -77,7 +77,7 @@ jobs:
           ls build/Payload/"Swiftfin iOS.app"
 
       - name: Fake Code Sign the App
-        run: ldid -S build/Payload/"Swiftfin iOS.app"/Swiftfin
+        run: ldid -S build/Payload/"Swiftfin iOS.app"/"Swiftfin iOS"
 
       - name: Package IPA
         run: |
