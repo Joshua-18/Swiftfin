@@ -54,10 +54,10 @@ jobs:
         run: mkdir -p build/Payload
 
       - name: Copy App to Payload
-        run: cp -r build/derived_data/Build/Products/Release-iphoneos/Swiftfin.app build/Payload/Swiftfin.app
+        run: cp -r build/derived_data/Build/Products/Release-iphoneos/"Swiftfin.app" build/Payload
 
       - name: Fake Code Sign the App
-        run: ldid -S build/Payload/Swiftfin.app/Swiftfin
+        run: ldid -S build/Payload/"Swiftfin.app"/"Swiftfin"
 
       - name: Package IPA
         run: |
@@ -67,5 +67,5 @@ jobs:
       - name: Upload IPA as Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Swiftfin
+          name: Swiftfin-ipa
           path: build/Swiftfin.ipa
