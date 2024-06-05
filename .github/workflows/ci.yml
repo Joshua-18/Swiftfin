@@ -23,15 +23,13 @@ jobs:
 
     steps:
       - name: Use Node.js 20
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v2
         with:
           node-version: '20'
 
       - name: Checkout Main
-        uses: actions/checkout@v4.1.6
+        uses: actions/checkout@v4
         with:
-          path: main
-          ref: ${{ github.event.inputs.commit_id || github.ref }}
           submodules: recursive
 
       - name: Install Dependencies
@@ -67,7 +65,7 @@ jobs:
           zip -r Swiftfin.ipa Payload
 
       - name: Upload IPA as Artifact
-        uses: actions/upload-artifact@v4.3.3
+        uses: actions/upload-artifact@v4
         with:
           name: Swiftfin-ipa
           path: build/Swiftfin.ipa
