@@ -13,6 +13,15 @@ on:
         default: "Swiftfin"
         required: false
         type: string
+      create_release:
+        description: "Create a draft release"
+        default: true
+        required: false
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -23,13 +32,15 @@ jobs:
 
     steps:
       - name: Use Node.js 20
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
 
       - name: Checkout Main
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.6
         with:
+          path: main
+          ref: ${{ github.event.inputs.commit_id || github.ref }}
           submodules: recursive
 
       - name: Install Dependencies
@@ -65,7 +76,26 @@ jobs:
           zip -r Swiftfin.ipa Payload
 
       - name: Upload IPA as Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.3
         with:
           name: Swiftfin-ipa
           path: build/Swiftfin.ipa
+
+      - name: Prepare Release Notes
+        run: |
+          export TODAY=$(date '+%Y-%m-%d')
+          echo "Release for Swiftfin" > release_notes.md
+          echo "" >> release_notes.md
+          echo "Built on $TODAY" >> release_notes.md
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2.0.5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.sha }}
+          name: Release ${{ github.sha }}
+          files: build/Swiftfin.ipa
+          draft: ${{ inputs.create_release }}
+          body_path: release_notes.md
